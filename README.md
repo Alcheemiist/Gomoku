@@ -19,38 +19,32 @@ This is a Gomoku game project developed as part of the 42 projects. The project 
     cd Gomoku
     ```
 
-### Building the Project
+### Run the Project
 
-To build both the frontend and backend, run:
-```sh
+Usage Examples
+#### Show help
+make help
+
+#### Check dependencies
+make check-deps
+
+#### Build everything
 make build
-```
 
-This will:
+#### Run in development mode
+make dev
 
-- Create a virtual environment for the backend and install the dependencies.
-- Build the frontend using npm.
-- Package the backend using PyInstalle
-
-### Running the Project
-
-To start the project, run:
-```sh
+#### Build and start
 make start
-```
 
-This will build the project and start the Gomoku executable.
+#### Check project status
+make status
 
-### Cleaning the Project
-To clean the build artifacts, run:
-```sh
+#### Clean build artifacts
 make clean
-```
 
-To perform a full clean, run:
-```sh
-make fclean
-```
+#### Full clean and rebuild
+make re
 
 ## Project Details
 
