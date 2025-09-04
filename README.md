@@ -15,7 +15,6 @@ This is a Gomoku game project developed as part of the 42 projects. The project 
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/sboof911/Gomoku
     cd Gomoku
     ```
 
@@ -82,3 +81,8 @@ The frontend is located in the [`render`](render)  directory and includes:
 - [`src`](render/src): Contains the React components and main application logic.
 - [`index`](render/index.html): The main HTML file.
 - [`package`](render/package.json): The npm configuration file.
+
+
+- history of moves by time log
+
+of ai 

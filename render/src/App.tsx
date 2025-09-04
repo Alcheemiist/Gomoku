@@ -6,43 +6,49 @@ import PlayerVsPlayer from './pages/PlayerVsPlayer';
 import PlayerVsAI from './pages/PlayerVsAI';
 import Settings from './pages/Settings';
 import { GameProvider } from './context/GameContext';
+import { SoundProvider } from './context/SoundContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <GameProvider>
-      <BrowserRouter>
-        <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-        <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 2000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#4ade80',
-                  secondary: '#fff',
+    <ErrorBoundary>
+      <SoundProvider>
+        <GameProvider>
+          <BrowserRouter>
+          <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+          <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 2000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                success: {
+                  iconTheme: {
+                    primary: '#4ade80',
+                    secondary: '#fff',
+                  },
                 },
-              },
-            }}
-          />
-          <Routes>
-            <Route path="/" element={<MainMenu />} />
-            <Route path="/pvp" element={<PlayerVsPlayer />} />
-            <Route path="/ai" element={<PlayerVsAI />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </GameProvider>
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+            />
+            <Routes>
+              <Route path="/" element={<MainMenu />} />
+              <Route path="/pvp" element={<PlayerVsPlayer />} />
+              <Route path="/ai" element={<PlayerVsAI />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </div>
+          </BrowserRouter>
+        </GameProvider>
+      </SoundProvider>
+    </ErrorBoundary>
   );
 }
 

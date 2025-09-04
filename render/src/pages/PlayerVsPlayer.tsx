@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import Board from '../components/Board';
 import PlayerInfo from '../components/PlayerInfo';
 import WinnerModal from '../components/WinnerModal';
+import GameStats from '../components/GameStats';
+import ErrorDisplay from '../components/ErrorDisplay';
+import KeyboardShortcutsModal from '../components/KeyboardShortcutsModal';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import type { WinningLine } from '../types/game';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, HelpCircle } from 'lucide-react';
 import axios from 'axios';
 import config from '../Config';
 import toast from 'react-hot-toast';
@@ -28,6 +32,10 @@ export default function PlayerVsPlayer() {
   const [winningLine, setWinningLine] = useState<WinningLine>(null);
   const [lastMoveTime, setLastMoveTime] = useState<number>(Date.now());
   const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [gameStartTime] = useState<number>(Date.now());
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
 
   const initializeGame = async () => {
@@ -108,29 +116,41 @@ export default function PlayerVsPlayer() {
     return null;
   };
 
-  const handleCellClick = (row: number, col: number) => {
-    if (winner) return;
-    axios.post(`${config.serverUrl}/api/game/move`, { x: col, y: row }, { headers: config.headers_data })
-    .then(async response => {
+  const handleCellClick = async (row: number, col: number) => {
+    if (winner || isLoading) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.post(`${config.serverUrl}/api/game/move`, { x: col, y: row }, { headers: config.headers_data });
+      
       if (response.data.played) {
-        get_board();
-        set_Peer_Captured();
-        set_Turns();
+        await get_board();
+        await set_Peer_Captured();
+        await set_Turns();
         setBestMoveX(null);
         setBestMoveY(null);
+        
         if (await checkWinner() === false) {
-          set_CurrentPlayer();
+          await set_CurrentPlayer();
           setPlayer1Time(0);
           setPlayer2Time(0);
           setLastMoveTime(Date.now());
-          }
+        }
       } else {
+        setError('Invalid move');
         toast.error('Invalid move');
       }
-    })
-    .catch(error => {
-      toast.error('Error making move:', error.response.data.message);
-    });
+    } catch (error) {
+      const errorMessage = axios.isAxiosError(error) && error.response 
+        ? error.response.data.message 
+        : 'Error making move';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const checkWinner = async () => {
@@ -204,6 +224,18 @@ export default function PlayerVsPlayer() {
       setShowWinnerModal(false);
   };
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onNewGame: handleNewGame,
+    onMainMenu: () => navigate('/'),
+    onSettings: () => navigate('/settings'),
+    onToggleHints: () => {
+      if (currentPlayer === 1) setShowHints1(prev => !prev);
+      if (currentPlayer === 2) setShowHints2(prev => !prev);
+    },
+    disabled: showWinnerModal || showShortcutsModal
+  });
+
   const handleBackToMenu = async () => {
     try {
       await axios.post(`${config.serverUrl}/api/game/delete`, {}, { headers: config.headers_data });
@@ -216,44 +248,98 @@ export default function PlayerVsPlayer() {
 
   return (
     <div className="min-h-screen p-8">
-      <button
-        onClick={() => handleBackToMenu()}
-        className="absolute top-4 left-4 text-white hover:text-gray-300 flex items-center gap-2"
-      >
-        <ArrowLeft className="w-6 h-6" />
-        Back to Menu
-      </button>
+      <div className="absolute top-4 left-4 flex items-center gap-4">
+        <button
+          onClick={() => handleBackToMenu()}
+          className="text-white hover:text-gray-300 flex items-center gap-2 transition-colors"
+        >
+          <ArrowLeft className="w-6 h-6" />
+          Back to Menu
+        </button>
+        
+        <button
+          onClick={() => setShowShortcutsModal(true)}
+          className="text-white/70 hover:text-white flex items-center gap-2 transition-colors"
+          title="Keyboard Shortcuts (F1)"
+        >
+          <HelpCircle className="w-5 h-5" />
+          <span className="text-sm">Help</span>
+        </button>
+      </div>
 
-      <div className={`flex items-center justify-center gap-8 max-w-7xl mx-auto ${showWinnerModal ? 'blur-sm' : ''}`}>
-        <PlayerInfo
-          name={player1Name}
-          captured={captured1}
-          time={player1Time}
-          isCurrentTurn={currentPlayer === 1}
-          showHints={showHints1}
-          onToggleHints={() => setShowHints1(prev => !prev)}
-        />
-
-        <div className="flex flex-col items-center">
-          <div className="mb-4 px-6 py-2 bg-white/10 backdrop-blur rounded-full">
-            <span className="text-xl font-bold text-white">Turn {turns}</span>
-          </div>
-          <Board 
-            board={board} 
-            onCellClick={handleCellClick} 
-            hintPosition={getHintPosition()}
-            winningLine={winningLine}
+      <div className={`flex flex-col lg:flex-row items-center justify-center gap-8 max-w-7xl mx-auto ${showWinnerModal ? 'blur-sm' : ''}`}>
+        {/* Error Display */}
+        <div className="w-full max-w-md lg:hidden">
+          <ErrorDisplay 
+            error={error} 
+            onDismiss={() => setError(null)} 
           />
         </div>
+        
+        {/* Game Stats */}
+        <div className="w-full max-w-md lg:hidden">
+          <GameStats
+            totalMoves={turns}
+            gameTime={(Date.now() - gameStartTime) / 1000}
+            currentPlayer={currentPlayer}
+            player1Captured={captured1}
+            player2Captured={captured2}
+          />
+        </div>
+        <div className="flex flex-col gap-4">
+          <PlayerInfo
+            name={player1Name}
+            captured={captured1}
+            time={player1Time}
+            isCurrentTurn={currentPlayer === 1}
+            showHints={showHints1}
+            onToggleHints={() => setShowHints1(prev => !prev)}
+          />
+          {/* Desktop Game Stats */}
+          <div className="hidden lg:block">
+            <GameStats
+              totalMoves={turns}
+              gameTime={(Date.now() - gameStartTime) / 1000}
+              currentPlayer={currentPlayer}
+              player1Captured={captured1}
+              player2Captured={captured2}
+            />
+          </div>
+        </div>
 
-        <PlayerInfo
-          name={player2Name}
-          captured={captured2}
-          time={player2Time}
-          isCurrentTurn={currentPlayer === 2}
-          showHints={showHints2}
-          onToggleHints={() => setShowHints2(prev => !prev)}
-        />
+        <div className="flex flex-col items-center" style={{ minHeight: '600px' }}>
+          <div className="mb-4 px-6 py-2 bg-white/10 backdrop-blur rounded-full h-12 flex items-center justify-center w-32">
+            <span className="text-xl font-bold text-white">Turn {turns}</span>
+          </div>
+          <div className="flex-shrink-0">
+            <Board 
+              board={board} 
+              onCellClick={handleCellClick} 
+              hintPosition={getHintPosition()}
+              winningLine={winningLine}
+              isLoading={isLoading}
+              disabled={!!winner}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <PlayerInfo
+            name={player2Name}
+            captured={captured2}
+            time={player2Time}
+            isCurrentTurn={currentPlayer === 2}
+            showHints={showHints2}
+            onToggleHints={() => setShowHints2(prev => !prev)}
+          />
+          {/* Desktop Error Display */}
+          <div className="hidden lg:block">
+            <ErrorDisplay 
+              error={error} 
+              onDismiss={() => setError(null)} 
+            />
+          </div>
+        </div>
       </div>
 
       {showWinnerModal && winner && (
@@ -264,6 +350,11 @@ export default function PlayerVsPlayer() {
           onClose={() => setShowWinnerModal(false)}
         />
       )}
+
+      <KeyboardShortcutsModal
+        isOpen={showShortcutsModal}
+        onClose={() => setShowShortcutsModal(false)}
+      />
     </div>
   );
 }

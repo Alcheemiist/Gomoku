@@ -57,7 +57,6 @@ A sophisticated Gomoku (Five in a Row) game featuring an advanced AI opponent us
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/sboof911/Gomoku
 cd Gomoku
 
 # Build and run (one command)

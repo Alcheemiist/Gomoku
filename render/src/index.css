@@ -1,3 +1,234 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom CSS Variables for Enhanced Color Scheme */
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --secondary: #8b5cf6;
+  --secondary-dark: #7c3aed;
+  --accent: #ec4899;
+  --accent-dark: #db2777;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --stone-black: #1f2937;
+  --stone-white: #f9fafb;
+  --stone-white-border: #d1d5db;
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes stonePlace {
+  0% { transform: scale(0) rotate(180deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(90deg); opacity: 0.8; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes winPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes confetti {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Custom Classes */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-stone-place {
+  animation: stonePlace 0.4s ease-out;
+}
+
+.animate-win-pulse {
+  animation: winPulse 1s ease-in-out infinite;
+}
+
+.animate-confetti {
+  animation: confetti 3s ease-out forwards;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.glass-effect {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced Button Styles */
+.btn-primary {
+  @apply bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover-lift;
+}
+
+.btn-secondary {
+  @apply bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover-lift;
+}
+
+.btn-ghost {
+  @apply bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 border border-white/20;
+}
+
+/* Enhanced Typography */
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Board Enhancements */
+.board-intersection {
+  @apply relative z-10 transition-all duration-200;
+  width: 24px;
+  height: 24px;
+}
+
+.board-intersection:hover {
+  @apply bg-blue-500/20 rounded-full;
+}
+
+.board-intersection:focus {
+  @apply outline-none ring-2 ring-blue-400 ring-opacity-50 rounded-full;
+}
+
+.board-intersection:active {
+  @apply scale-95;
+}
+
+/* Responsive board intersections */
+@media (max-width: 640px) {
+  .board-intersection {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .board-intersection {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Stone Styles */
+.stone-black {
+  @apply bg-gray-800 border-2 border-gray-600;
+}
+
+.stone-white {
+  @apply bg-white border-2 border-gray-300;
+}
+
+/* Loading States */
+.loading-overlay {
+  @apply absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+/* Error States */
+.error-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Enhanced Responsive Design */
+@media (max-width: 768px) {
+  .glass-effect {
+    padding: 1rem;
+  }
+  
+  .btn-primary, .btn-secondary, .btn-ghost {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Improved Focus States */
+button:focus-visible, 
+.board-intersection:focus-visible {
+  @apply outline-none ring-2 ring-indigo-400 ring-offset-2 ring-offset-transparent;
+}
+
+/* Better Touch Targets */
+@media (hover: none) and (pointer: coarse) {
+  .board-intersection {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Improved Text Selection */
+::selection {
+  background-color: rgba(99, 102, 241, 0.3);
+  color: white;
+}
+
+/* Better Loading States */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
