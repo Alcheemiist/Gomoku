@@ -66,76 +66,71 @@ export default function AIGameInsights({ insights, className = '' }: AIGameInsig
         <h3 className="text-white font-semibold">Game Insights</h3>
       </div>
 
-      <div className="space-y-4">
+      {/* Horizontal Layout for Key Metrics */}
+      <div className="grid grid-cols-3 gap-4 mb-4">
         {/* Game Phase */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-white/70" />
-            <span className="text-white/80 text-sm">Game Phase</span>
-          </div>
-          <span className={`font-semibold ${getPhaseColor(insights.gamePhase)}`}>
+        <div className="bg-white/5 rounded-lg p-3 text-center">
+          <Clock className="w-5 h-5 text-white/70 mx-auto mb-2" />
+          <div className="text-white/60 text-xs mb-1">Phase</div>
+          <div className={`font-semibold text-sm ${getPhaseColor(insights.gamePhase)}`}>
             {insights.gamePhase.charAt(0).toUpperCase() + insights.gamePhase.slice(1)}
-          </span>
+          </div>
         </div>
 
-        {/* Position Evaluation */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-white/70" />
-            <span className="text-white/80 text-sm">Position</span>
+        {/* AI Advantage */}
+        <div className="bg-white/5 rounded-lg p-3 text-center">
+          <TrendingUp className="w-5 h-5 text-white/70 mx-auto mb-2" />
+          <div className="text-white/60 text-xs mb-1">Advantage</div>
+          <div className={`font-semibold text-sm ${getAdvantageColor(insights.aiAdvantage)}`}>
+            {insights.aiAdvantage > 0 ? `+${insights.aiAdvantage}` : insights.aiAdvantage}
           </div>
-          <span className={`font-semibold ${getAdvantageColor(insights.aiAdvantage)}`}>
-            {getAdvantageText(insights.aiAdvantage)}
-          </span>
         </div>
 
         {/* Predicted Outcome */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {getOutcomeIcon(insights.predictedOutcome)}
-            <span className="text-white/80 text-sm">Prediction</span>
-          </div>
-          <span className={`font-semibold ${getOutcomeColor(insights.predictedOutcome)}`}>
+        <div className="bg-white/5 rounded-lg p-3 text-center">
+          {getOutcomeIcon(insights.predictedOutcome)}
+          <div className="text-white/60 text-xs mb-1 mt-2">Outcome</div>
+          <div className={`font-semibold text-sm ${getOutcomeColor(insights.predictedOutcome)}`}>
             {insights.predictedOutcome.charAt(0).toUpperCase() + insights.predictedOutcome.slice(1)}
-          </span>
+          </div>
         </div>
-
-        {/* Key Threats */}
-        {insights.keyThreats.length > 0 && (
-          <div className="pt-3 border-t border-white/10">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-orange-400" />
-              <span className="text-white/80 text-sm font-semibold">Key Threats</span>
-            </div>
-            <ul className="space-y-1">
-              {insights.keyThreats.slice(0, 2).map((threat, index) => (
-                <li key={index} className="text-white/70 text-xs flex items-start gap-2">
-                  <span className="text-orange-400 mt-0.5">•</span>
-                  <span>{threat}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Strategic Recommendations */}
-        {insights.strategicRecommendations.length > 0 && (
-          <div className="pt-3 border-t border-white/10">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-green-400" />
-              <span className="text-white/80 text-sm font-semibold">Recommendations</span>
-            </div>
-            <ul className="space-y-1">
-              {insights.strategicRecommendations.slice(0, 2).map((rec, index) => (
-                <li key={index} className="text-white/70 text-xs flex items-start gap-2">
-                  <span className="text-green-400 mt-0.5">•</span>
-                  <span>{rec}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
+
+      {/* Key Threats */}
+      {insights.keyThreats.length > 0 && (
+        <div className="pt-3 border-t border-white/10">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-4 h-4 text-orange-400" />
+            <span className="text-white/80 text-sm font-semibold">Key Threats</span>
+          </div>
+          <ul className="space-y-1">
+            {insights.keyThreats.slice(0, 2).map((threat, index) => (
+              <li key={index} className="text-white/70 text-xs flex items-start gap-2">
+                <span className="text-orange-400 mt-0.5">•</span>
+                <span>{threat}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Strategic Recommendations */}
+      {insights.strategicRecommendations.length > 0 && (
+        <div className="pt-3 border-t border-white/10">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-4 h-4 text-green-400" />
+            <span className="text-white/80 text-sm font-semibold">Recommendations</span>
+          </div>
+          <ul className="space-y-1">
+            {insights.strategicRecommendations.slice(0, 2).map((rec, index) => (
+              <li key={index} className="text-white/70 text-xs flex items-start gap-2">
+                <span className="text-green-400 mt-0.5">•</span>
+                <span>{rec}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

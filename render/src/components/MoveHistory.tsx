@@ -13,6 +13,7 @@ interface MoveHistoryProps {
   currentMoveIndex: number;
   onMoveTo: (index: number) => void;
   onReset: () => void;
+  isVisualizationMode?: boolean;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export default function MoveHistory({
   currentMoveIndex, 
   onMoveTo, 
   onReset, 
+  isVisualizationMode = false,
   className = '' 
 }: MoveHistoryProps) {
   const canGoBack = currentMoveIndex > 0;
@@ -51,6 +53,11 @@ export default function MoveHistory({
       <div className="flex items-center gap-2 mb-4">
         <History className="w-5 h-5 text-indigo-400" />
         <h3 className="text-white font-semibold">Move History</h3>
+        {isVisualizationMode && (
+          <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs">
+            Visualization Mode
+          </span>
+        )}
         <span className="text-white/60 text-sm ml-auto">
           {currentMoveIndex + 1} / {moves.length}
         </span>
@@ -139,7 +146,9 @@ export default function MoveHistory({
       {moves.length > 0 && (
         <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
           <div className="text-white/80 text-sm">
-            <span className="font-semibold">Current Position:</span>
+            <span className="font-semibold">
+              {isVisualizationMode ? 'Viewing Position:' : 'Current Position:'}
+            </span>
             <span className="ml-2">
               {moves[currentMoveIndex] ? 
                 `Turn ${moves[currentMoveIndex].turn} - Player ${moves[currentMoveIndex].player} at (${moves[currentMoveIndex].position[0] + 1}, ${moves[currentMoveIndex].position[1] + 1})` :
@@ -147,6 +156,11 @@ export default function MoveHistory({
               }
             </span>
           </div>
+          {isVisualizationMode && (
+            <div className="mt-2 text-blue-300 text-xs">
+              💡 Navigation is for visualization only - game state unchanged
+            </div>
+          )}
         </div>
       )}
     </div>

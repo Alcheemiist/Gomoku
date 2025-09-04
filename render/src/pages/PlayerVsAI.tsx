@@ -6,7 +6,6 @@ import PlayerInfo from '../components/PlayerInfo';
 import WinnerModal from '../components/WinnerModal';
 import AIStatistics from '../components/AIStatistics';
 import AIMoveAnalysis from '../components/AIMoveAnalysis';
-import AIGameInsights from '../components/AIGameInsights';
 import type { WinningLine } from '../types/game';
 import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
@@ -63,15 +62,6 @@ export default function PlayerVsAI() {
     nodesEvaluated: number;
   } | null>(null);
 
-  // AI Game Insights
-  const [gameInsights, setGameInsights] = useState<{
-    gamePhase: 'opening' | 'midgame' | 'endgame';
-    aiAdvantage: number;
-    predictedOutcome: 'win' | 'loss' | 'draw' | 'unclear';
-    keyThreats: string[];
-    strategicRecommendations: string[];
-    positionEvaluation: number;
-  } | null>(null);
 
   const generateMoveReasoning = (x: number, y: number, thinkingTime: number): string => {
     const reasons = [
@@ -117,38 +107,6 @@ export default function PlayerVsAI() {
     return alternatives.slice(0, 2);
   };
 
-  const generateGameInsights = (turns: number) => {
-    const phase = getGamePhase(turns);
-    const aiAdvantage = Math.floor(Math.random() * 40) - 20; // -20 to 20
-    
-    const threats = [
-      "Opponent building center control",
-      "Potential winning sequence detected",
-      "Weak defensive formation",
-      "Missing key blocking moves",
-      "Vulnerable to tactical combinations"
-    ];
-
-    const recommendations = [
-      "Strengthen center position",
-      "Block opponent's threats",
-      "Create multiple attack lines",
-      "Improve piece coordination",
-      "Control key intersections"
-    ];
-
-    const outcomes: ('win' | 'loss' | 'draw' | 'unclear')[] = ['win', 'loss', 'draw', 'unclear'];
-    const predictedOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
-
-    return {
-      gamePhase: phase,
-      aiAdvantage: aiAdvantage,
-      predictedOutcome: predictedOutcome,
-      keyThreats: threats.slice(0, Math.floor(Math.random() * 3) + 1),
-      strategicRecommendations: recommendations.slice(0, Math.floor(Math.random() * 3) + 1),
-      positionEvaluation: Math.floor(Math.random() * 100)
-    };
-  };
 
   const get_Players_Name = async () => {
     try {
@@ -324,7 +282,6 @@ export default function PlayerVsAI() {
         await set_Turns();
         const hasWinner = await checkWinner();
         if (hasWinner) {
-          // Game ended, don't continue with AI statistics
           return;
         }
         await set_CurrentPlayer();
@@ -378,9 +335,6 @@ export default function PlayerVsAI() {
                 
                 setLastMoveAnalysis(analysis);
                 
-                // Generate game insights
-                const insights = generateGameInsights(turns);
-                setGameInsights(insights);
       }
     }
   };
@@ -423,7 +377,6 @@ export default function PlayerVsAI() {
         await set_Turns();
         const hasWinner = await checkWinner();
         if (hasWinner) {
-          // Game ended
           return;
         }
         await set_CurrentPlayer();
@@ -452,6 +405,7 @@ export default function PlayerVsAI() {
     setWinningLine(null);
     setShowWinnerModal(false);
   };
+
 
   const handleBackToMenu = async () => {
     try {
@@ -511,12 +465,7 @@ export default function PlayerVsAI() {
             />
           </div>
           
-          {/* AI Game Insights - moved to bottom of board */}
-          <div className="mt-6 w-full max-w-md">
-            <AIGameInsights
-              insights={gameInsights}
-            />
-          </div>
+
         </div>
 
         <div className="flex flex-col gap-4">
@@ -542,6 +491,7 @@ export default function PlayerVsAI() {
             analysis={lastMoveAnalysis}
             isVisible={true}
           />
+          
         </div>
       </div>
 

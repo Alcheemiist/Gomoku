@@ -44,29 +44,49 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
     if (!winningLine) return null;
 
     const { start, end } = winningLine;
-    const startX = start[1] * cellSize;
-    const startY = start[0] * cellSize;
-    const endX = end[1] * cellSize;
-    const endY = end[0] * cellSize;
-
-    // Calculate line length and angle
-    const dx = endX - startX;
-    const dy = endY - startY;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    
+    // Calculate all 5 positions in the winning line
+    const winningPositions: [number, number][] = [];
+    const dx = end[1] - start[1];
+    const dy = end[0] - start[0];
+    
+    // Generate all 5 positions
+    for (let i = 0; i < 5; i++) {
+      const x = start[1] + (dx / 4) * i;
+      const y = start[0] + (dy / 4) * i;
+      winningPositions.push([Math.round(y), Math.round(x)]);
+    }
 
     return (
-      <div
-        className="absolute bg-green-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-20"
-        style={{
-          width: `${length}px`,
-          height: '4px',
-          left: startX,
-          top: startY,
-          transformOrigin: 'left',
-          transform: `rotate(${angle}deg)`,
-        }}
-      />
+      <>
+        {/* Winning line connecting all 5 stones */}
+        <div
+          className="absolute bg-yellow-400 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-20 shadow-lg"
+          style={{
+            width: `${Math.sqrt((end[1] - start[1]) * cellSize * (end[1] - start[1]) * cellSize + (end[0] - start[0]) * cellSize * (end[0] - start[0]) * cellSize)}px`,
+            height: '6px',
+            left: `${start[1] * cellSize + cellSize/2}px`,
+            top: `${start[0] * cellSize + cellSize/2}px`,
+            transform: `translate(-50%, -50%) rotate(${Math.atan2((end[0] - start[0]) * cellSize, (end[1] - start[1]) * cellSize) * (180 / Math.PI)}deg)`,
+            boxShadow: '0 0 10px rgba(255, 255, 0, 0.8)',
+          }}
+        />
+        
+        {/* Highlight all 5 winning stones */}
+        {winningPositions.map(([row, col], index) => (
+          <div
+            key={index}
+            className="absolute rounded-full border-4 border-yellow-400 z-30 animate-pulse"
+            style={{
+              width: `${cellSize * 0.8}px`,
+              height: `${cellSize * 0.8}px`,
+              left: `${col * cellSize + cellSize * 0.1}px`,
+              top: `${row * cellSize + cellSize * 0.1}px`,
+              boxShadow: '0 0 15px rgba(255, 255, 0, 1), inset 0 0 10px rgba(255, 255, 0, 0.5)',
+            }}
+          />
+        ))}
+      </>
     );
   };
 
@@ -146,10 +166,21 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
             row.map((cell, j) => {
               const isHovered = hoveredCell && hoveredCell[0] === i && hoveredCell[1] === j;
               const isHint = hintPosition && hintPosition[0] === i && hintPosition[1] === j;
-              const isWinning = winningLine && (
-                (winningLine.start[0] === i && winningLine.start[1] === j) ||
-                (winningLine.end[0] === i && winningLine.end[1] === j)
-              );
+              const isWinning = winningLine && (() => {
+                const { start, end } = winningLine;
+                const dx = end[1] - start[1];
+                const dy = end[0] - start[0];
+                
+                // Check if this position is part of the winning line
+                for (let k = 0; k < 5; k++) {
+                  const x = start[1] + (dx / 4) * k;
+                  const y = start[0] + (dy / 4) * k;
+                  if (Math.round(y) === i && Math.round(x) === j) {
+                    return true;
+                  }
+                }
+                return false;
+              })();
               
               return (
                 <button
@@ -172,10 +203,14 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
                     <div 
                       className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-stone-place
                         ${cell === 1 ? 'stone-black' : 'stone-white'}
-                        ${isWinning ? 'animate-win-pulse' : ''}`}
+                        ${isWinning ? 'animate-win-pulse border-4 border-yellow-400 shadow-lg' : ''}`}
                       style={{ 
                         width: `${Math.max(cellSize * 0.8, 16)}px`, 
-                        height: `${Math.max(cellSize * 0.8, 16)}px` 
+                        height: `${Math.max(cellSize * 0.8, 16)}px`,
+                        ...(isWinning && {
+                          boxShadow: '0 0 20px rgba(255, 255, 0, 0.8), inset 0 0 10px rgba(255, 255, 0, 0.3)',
+                          zIndex: 25
+                        })
                       }}
                     />
                   )}

@@ -124,7 +124,7 @@ export default function WinnerModal({ winner, onNewGame, onMainMenu, onClose }: 
               </button>
               <button
                 onClick={onMainMenu}
-                className="btn-ghost flex items-center justify-center gap-2 flex-1 py-4 text-lg font-semibold hover:scale-105 transition-all duration-200 border-2 border-gray-300 hover:border-gray-400"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-4 px-6 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 flex-1 text-lg border-2 border-gray-300 hover:border-gray-400"
               >
                 <Home className="w-5 h-5" />
                 Main Menu
