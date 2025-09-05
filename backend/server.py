@@ -22,14 +22,20 @@ dist_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'render_dist
 def serve_index():
     return send_from_directory(dist_dir, 'index.html')
 
-@app.route('/<path>')
-def serve_pages(path):
-    return send_from_directory(dist_dir, 'index.html')
-
 # Route to serve other static files (CSS, JS, etc.)
 @app.route('/<path:path>')
 def serve_static_files(path):
     return send_from_directory(dist_dir, path)
+
+# Shutdown endpoint
+@app.route('/api/shutdown', methods=['POST'])
+def shutdown():
+    """Gracefully shutdown the server"""
+    def shutdown_server():
+        os._exit(0)
+    
+    shutdown_server()
+    return jsonify({"message": "Server shutting down..."})
 
 def main():
     port = 6969

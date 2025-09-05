@@ -19,6 +19,9 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
   const DISPLAY_SIZE = 20;
   const BOARD_SIZE = cellSize * (DISPLAY_SIZE - 1);
   const [hoveredCell, setHoveredCell] = useState<[number, number] | null>(null);
+  const [lastMove, setLastMove] = useState<[number, number] | null>(null);
+  const [lastMovePlayer, setLastMovePlayer] = useState<1 | 2 | null>(null);
+  const [rippleEffect, setRippleEffect] = useState<[number, number] | null>(null);
   const { playStonePlace, playHover } = useSoundEffects();
   const { settings: soundSettings } = useSoundSettings();
 
@@ -45,16 +48,23 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
 
     const { start, end } = winningLine;
     
-    // Calculate all 5 positions in the winning line
-    const winningPositions: [number, number][] = [];
+    // Calculate the direction vector
     const dx = end[1] - start[1];
     const dy = end[0] - start[0];
     
-    // Generate all 5 positions
+    // Normalize the direction to get unit vector
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const unitDx = dx / length;
+    const unitDy = dy / length;
+    
+    // Calculate all 5 positions in the winning line
+    const winningPositions: [number, number][] = [];
+    
+    // Generate exactly 5 consecutive positions
     for (let i = 0; i < 5; i++) {
-      const x = start[1] + (dx / 4) * i;
-      const y = start[0] + (dy / 4) * i;
-      winningPositions.push([Math.round(y), Math.round(x)]);
+      const x = Math.round(start[1] + unitDx * i);
+      const y = Math.round(start[0] + unitDy * i);
+      winningPositions.push([y, x]);
     }
 
     return (
@@ -95,6 +105,14 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
       if (soundSettings.enabled && soundSettings.stonePlace) {
         playStonePlace();
       }
+      
+      // Set last move for animation
+      setLastMove([row, col]);
+      
+      // Trigger ripple effect
+      setRippleEffect([row, col]);
+      setTimeout(() => setRippleEffect(null), 600);
+      
       onCellClick(row, col);
     }
   };
@@ -107,17 +125,28 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
   };
 
   return (
-    <div className="relative bg-amber-100 p-8 rounded-lg shadow-xl" style={{ 
+    <div className="relative bg-gradient-to-br from-amber-50 to-amber-100 p-8 rounded-2xl shadow-2xl border border-amber-200" style={{ 
       width: BOARD_SIZE + 64, 
       height: BOARD_SIZE + 64,
       minWidth: BOARD_SIZE + 64,
       minHeight: BOARD_SIZE + 64
     }}>
+      {/* Enhanced loading overlay */}
       {isLoading && (
         <div className="loading-overlay">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="text-gray-700 mt-2 text-sm font-medium">AI is thinking...</p>
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl border border-white/20">
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
+                <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border-2 border-indigo-400 opacity-20"></div>
+              </div>
+              <p className="text-gray-700 mt-4 text-sm font-semibold animate-pulse">AI is thinking...</p>
+              <div className="flex space-x-1 mt-2">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -128,25 +157,27 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
           height: BOARD_SIZE,
         }}
       >
-        {/* Grid lines */}
+        {/* Enhanced Grid lines with subtle animations */}
         {Array.from({ length: DISPLAY_SIZE }, (_, i) => (
           <React.Fragment key={i}>
             {/* Vertical lines */}
             <div
-              className="absolute bg-[#855E42] w-[1px]"
+              className="absolute bg-gradient-to-b from-[#855E42] to-[#6B4423] w-[1px] shadow-sm"
               style={{
                 left: `${cellSize * i}px`,
                 top: '0px',
                 height: `${BOARD_SIZE}px`,
+                animation: `fadeIn 0.5s ease-out ${i * 0.02}s both`
               }}
             />
             {/* Horizontal lines */}
             <div
-              className="absolute bg-[#855E42] h-[1px]"
+              className="absolute bg-gradient-to-r from-[#855E42] to-[#6B4423] h-[1px] shadow-sm"
               style={{
                 top: `${cellSize * i}px`,
                 left: '0px',
                 width: `${BOARD_SIZE}px`,
+                animation: `fadeIn 0.5s ease-out ${i * 0.02}s both`
               }}
             />
           </React.Fragment>
@@ -166,6 +197,8 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
             row.map((cell, j) => {
               const isHovered = hoveredCell && hoveredCell[0] === i && hoveredCell[1] === j;
               const isHint = hintPosition && hintPosition[0] === i && hintPosition[1] === j;
+              const isLastMove = lastMove && lastMove[0] === i && lastMove[1] === j;
+              const isRipple = rippleEffect && rippleEffect[0] === i && rippleEffect[1] === j;
               const isWinning = winningLine && (() => {
                 const { start, end } = winningLine;
                 const dx = end[1] - start[1];
@@ -201,34 +234,53 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
                 >
                   {cell !== 0 && (
                     <div 
-                      className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-stone-place
+                      className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full
                         ${cell === 1 ? 'stone-black' : 'stone-white'}
-                        ${isWinning ? 'animate-win-pulse border-4 border-yellow-400 shadow-lg' : ''}`}
+                        ${isWinning ? 'animate-win-pulse border-4 border-yellow-400 shadow-lg' : ''}
+                        ${isLastMove ? 'animate-bounce-in ring-4 ring-blue-400 ring-opacity-50' : 'animate-stone-place'}
+                        ${isRipple ? 'animate-ripple' : ''}`}
                       style={{ 
                         width: `${Math.max(cellSize * 0.8, 16)}px`, 
                         height: `${Math.max(cellSize * 0.8, 16)}px`,
                         ...(isWinning && {
                           boxShadow: '0 0 20px rgba(255, 255, 0, 0.8), inset 0 0 10px rgba(255, 255, 0, 0.3)',
                           zIndex: 25
+                        }),
+                        ...(isLastMove && {
+                          boxShadow: '0 0 15px rgba(59, 130, 246, 0.6), inset 0 0 8px rgba(59, 130, 246, 0.2)',
+                          zIndex: 20
                         })
                       }}
                     />
                   )}
                   {isHint && cell === 0 && (
                     <div 
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-500 animate-pulse" 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-500 animate-pulse shadow-lg" 
                       style={{ 
                         width: `${Math.max(cellSize * 0.8, 16)}px`, 
-                        height: `${Math.max(cellSize * 0.8, 16)}px` 
+                        height: `${Math.max(cellSize * 0.8, 16)}px`,
+                        boxShadow: '0 0 10px rgba(99, 102, 241, 0.5)'
                       }}
                     />
                   )}
                   {isHovered && cell === 0 && !isHint && (
                     <div 
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-400/50" 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-blue-400/60 to-indigo-400/60 animate-scale-in shadow-md" 
                       style={{ 
-                        width: `${Math.max(cellSize * 0.5, 12)}px`, 
-                        height: `${Math.max(cellSize * 0.5, 12)}px` 
+                        width: `${Math.max(cellSize * 0.6, 14)}px`, 
+                        height: `${Math.max(cellSize * 0.6, 14)}px`,
+                        boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)'
+                      }}
+                    />
+                  )}
+                  {/* Ripple effect overlay */}
+                  {isRipple && (
+                    <div 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-blue-400 animate-ripple" 
+                      style={{ 
+                        width: `${Math.max(cellSize * 1.2, 20)}px`, 
+                        height: `${Math.max(cellSize * 1.2, 20)}px`,
+                        opacity: 0.6
                       }}
                     />
                   )}

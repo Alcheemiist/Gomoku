@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { useSoundSettings } from '../context/SoundContext';
+import { useTheme } from '../context/ThemeContext';
 import { ArrowLeft, User, Bot, Zap, Volume2, VolumeX, Palette, Clock, Eye } from 'lucide-react';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ export default function Settings() {
   } = useGame();
 
   const { settings: soundSettings, updateSettings: updateSoundSettings } = useSoundSettings();
+  const { theme, setTheme } = useTheme();
   
   // Additional game settings
   const [boardTheme, setBoardTheme] = useState<'classic' | 'modern' | 'dark'>('classic');
@@ -34,6 +37,11 @@ export default function Settings() {
         <ArrowLeft className="w-6 h-6" />
         Back to Menu
       </button>
+
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
 
       <div className="glass-effect p-8 rounded-2xl shadow-2xl w-full max-w-md animate-slide-in">
         <div className="text-center mb-8">

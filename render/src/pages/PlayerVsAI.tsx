@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
+import { useTheme } from '../context/ThemeContext';
 import Board from '../components/Board';
+import ThemeToggle from '../components/ThemeToggle';
 import PlayerInfo from '../components/PlayerInfo';
 import WinnerModal from '../components/WinnerModal';
 import AIStatistics from '../components/AIStatistics';
 import AIMoveAnalysis from '../components/AIMoveAnalysis';
+import AIThinkingIndicator from '../components/AIThinkingIndicator';
 import type { WinningLine } from '../types/game';
 import { ArrowLeft } from 'lucide-react';
 import axios from 'axios';
@@ -15,6 +18,7 @@ import toast from 'react-hot-toast';
 export default function PlayerVsAI() {
   const navigate = useNavigate();
   const { difficulty } = useGame();
+  const { theme } = useTheme();
   const [playerName, setPlayerNameState] = useState('');
   const [playerAIName, setPlayerAINameState] = useState('');
   const [board, setBoard] = useState<number[][]>(
@@ -431,6 +435,11 @@ export default function PlayerVsAI() {
         Back to Menu
       </button>
 
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4 z-40">
+        <ThemeToggle />
+      </div>
+
 
       <div
         className={`flex items-center justify-center gap-8 max-w-7xl mx-auto ${
@@ -494,6 +503,13 @@ export default function PlayerVsAI() {
           
         </div>
       </div>
+
+      {/* AI Thinking Indicator */}
+      <AIThinkingIndicator
+        isThinking={currentPlayer === AIPlayerIndex && !winner}
+        difficulty={difficulty}
+        thinkingTime={aiThinkingTime}
+      />
 
       {showWinnerModal && winner && (
         <WinnerModal

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import Board from '../components/Board';
+import ThemeToggle from '../components/ThemeToggle';
 import PlayerInfo from '../components/PlayerInfo';
 import WinnerModal from '../components/WinnerModal';
 import GameStats from '../components/GameStats';
@@ -15,6 +17,7 @@ import toast from 'react-hot-toast';
 
 export default function PlayerVsPlayer() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [player1Name, setPlayer1NameState] = useState('');
   const [player2Name, setPlayer2NameState] = useState('');
   const [board, setBoard] = useState<number[][]>(Array(19).fill(0).map(() => Array(19).fill(0)));
@@ -265,6 +268,11 @@ export default function PlayerVsPlayer() {
           <HelpCircle className="w-5 h-5" />
           <span className="text-sm">Help</span>
         </button>
+      </div>
+
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4 z-40">
+        <ThemeToggle />
       </div>
 
       <div className={`flex flex-col lg:flex-row items-center justify-center gap-8 max-w-7xl mx-auto ${showWinnerModal ? 'blur-sm' : ''}`}>

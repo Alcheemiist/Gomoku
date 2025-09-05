@@ -8,6 +8,7 @@ interface KeyboardShortcutsOptions {
   onToggleHints?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
+  onQuit?: () => void;
   disabled?: boolean;
 }
 
@@ -18,6 +19,7 @@ export function useKeyboardShortcuts({
   onToggleHints,
   onUndo,
   onRedo,
+  onQuit,
   disabled = false
 }: KeyboardShortcutsOptions = {}) {
   const navigate = useNavigate();
@@ -81,12 +83,19 @@ export function useKeyboardShortcuts({
         onMainMenu?.() || navigate('/');
         break;
       
+      case 'q':
+        if (isModifierPressed) {
+          event.preventDefault();
+          onQuit?.();
+        }
+        break;
+      
       case 'f1':
         event.preventDefault();
         // Show help modal or keyboard shortcuts
         break;
     }
-  }, [disabled, onNewGame, onMainMenu, onSettings, onToggleHints, onUndo, onRedo, navigate]);
+  }, [disabled, onNewGame, onMainMenu, onSettings, onToggleHints, onUndo, onRedo, onQuit, navigate]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);

@@ -73,7 +73,7 @@ NC := \033[0m # No Color
 # =============================================================================
 .PHONY: all build install clean fclean re help check-deps check-venv activate dev test format lint
 .PHONY: install-backend install-frontend build-backend build-frontend
-.PHONY: env start start-daemon stop stop-app status-app debug version check-port-6969 check-port-6969-status
+.PHONY: env start start-daemon stop stop-app status-app debug version check-port-6969 check-port-6969-status quit
 
 # =============================================================================
 # Default Target
@@ -400,6 +400,10 @@ stop-app: ## Stop the application (if running in daemon mode)
 		echo "$(GREEN)Application stopped$(NC)"; \
 	fi
 	@rm -f $(PROJECT_NAME).log 2>/dev/null || true
+
+quit: stop-app ## Quit the application gracefully
+	@echo "$(BLUE)Quitting $(PROJECT_NAME)...$(NC)"
+	@echo "$(GREEN)Application quit successfully$(NC)"
 
 status-app: ## Check if the application is running
 	@echo "$(BLUE)Checking $(PROJECT_NAME) application status...$(NC)"
