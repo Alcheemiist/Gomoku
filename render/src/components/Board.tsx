@@ -19,8 +19,6 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
   const DISPLAY_SIZE = 20;
   const BOARD_SIZE = cellSize * (DISPLAY_SIZE - 1);
   const [hoveredCell, setHoveredCell] = useState<[number, number] | null>(null);
-  const [lastMove, setLastMove] = useState<[number, number] | null>(null);
-  const [lastMovePlayer, setLastMovePlayer] = useState<1 | 2 | null>(null);
   const [rippleEffect, setRippleEffect] = useState<[number, number] | null>(null);
   const { playStonePlace, playHover } = useSoundEffects();
   const { settings: soundSettings } = useSoundSettings();
@@ -42,6 +40,7 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
     window.addEventListener('resize', updateCellSize);
     return () => window.removeEventListener('resize', updateCellSize);
   }, []);
+
 
   const renderWinningLine = () => {
     if (!winningLine) return null;
@@ -82,7 +81,7 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
           }}
         />
         
-        {/* Highlight all 5 winning stones */}
+        {/* Highlight all 5 winning stones with proper alignment */}
         {winningPositions.map(([row, col], index) => (
           <div
             key={index}
@@ -105,9 +104,6 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
       if (soundSettings.enabled && soundSettings.stonePlace) {
         playStonePlace();
       }
-      
-      // Set last move for animation
-      setLastMove([row, col]);
       
       // Trigger ripple effect
       setRippleEffect([row, col]);
@@ -197,18 +193,22 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
             row.map((cell, j) => {
               const isHovered = hoveredCell && hoveredCell[0] === i && hoveredCell[1] === j;
               const isHint = hintPosition && hintPosition[0] === i && hintPosition[1] === j;
-              const isLastMove = lastMove && lastMove[0] === i && lastMove[1] === j;
               const isRipple = rippleEffect && rippleEffect[0] === i && rippleEffect[1] === j;
               const isWinning = winningLine && (() => {
                 const { start, end } = winningLine;
                 const dx = end[1] - start[1];
                 const dy = end[0] - start[0];
                 
+                // Normalize the direction to get unit vector
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const unitDx = dx / length;
+                const unitDy = dy / length;
+                
                 // Check if this position is part of the winning line
                 for (let k = 0; k < 5; k++) {
-                  const x = start[1] + (dx / 4) * k;
-                  const y = start[0] + (dy / 4) * k;
-                  if (Math.round(y) === i && Math.round(x) === j) {
+                  const x = Math.round(start[1] + unitDx * k);
+                  const y = Math.round(start[0] + unitDy * k);
+                  if (y === i && x === j) {
                     return true;
                   }
                 }
@@ -236,8 +236,7 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
                     <div 
                       className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full
                         ${cell === 1 ? 'stone-black' : 'stone-white'}
-                        ${isWinning ? 'animate-win-pulse border-4 border-yellow-400 shadow-lg' : ''}
-                        ${isLastMove ? 'animate-bounce-in ring-4 ring-blue-400 ring-opacity-50' : 'animate-stone-place'}
+                        ${isWinning ? 'animate-win-pulse border-4 border-yellow-400 shadow-lg' : 'animate-stone-place'}
                         ${isRipple ? 'animate-ripple' : ''}`}
                       style={{ 
                         width: `${Math.max(cellSize * 0.8, 16)}px`, 
@@ -245,10 +244,6 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
                         ...(isWinning && {
                           boxShadow: '0 0 20px rgba(255, 255, 0, 0.8), inset 0 0 10px rgba(255, 255, 0, 0.3)',
                           zIndex: 25
-                        }),
-                        ...(isLastMove && {
-                          boxShadow: '0 0 15px rgba(59, 130, 246, 0.6), inset 0 0 8px rgba(59, 130, 246, 0.2)',
-                          zIndex: 20
                         })
                       }}
                     />
