@@ -73,7 +73,7 @@ NC := \033[0m # No Color
 # =============================================================================
 .PHONY: all build install clean fclean re help check-deps check-venv activate dev test format lint
 .PHONY: install-backend install-frontend build-backend build-frontend
-.PHONY: env start stop status debug version
+.PHONY: env start start-daemon stop stop-app status-app debug version check-port-6969 check-port-6969-status
 
 # =============================================================================
 # Default Target
@@ -240,10 +240,10 @@ build-backend: check-venv ## Build backend executable
 # =============================================================================
 # Development Targets
 # =============================================================================
-dev: install check-venv ## Run in development mode
+dev: install check-venv check-port-6969 ## Run in development mode
 	@echo "$(BLUE)Starting development server with global virtual environment...$(NC)"
-	@echo "$(YELLOW)Backend will run on http://localhost:5000$(NC)"
-	@echo "$(YELLOW)Frontend will run on http://localhost:3000$(NC)"
+	@echo "$(YELLOW)Backend will run on http://localhost:6969$(NC)"
+	@echo "$(YELLOW)Frontend will run on http://localhost:5173$(NC)"
 	@echo "$(YELLOW)Press Ctrl+C to stop$(NC)"
 	@trap 'kill %1; kill %2' INT; \
 		cd $(BACKEND_DIR) && $(VENV_ACTIVATE_CMD) python server.py & \
@@ -264,7 +264,32 @@ start: build ## Build and start the game
 		exit 1; \
 	fi
 	@echo "$(GREEN)Game starting...$(NC)"
-	@cd $(PROJECT_NAME) && ./$(EXECUTABLE)
+	@echo "$(YELLOW)Press Ctrl+C to stop the application$(NC)"
+	@trap 'echo "$(BLUE)Stopping $(PROJECT_NAME)...$(NC)"; pkill -f "$(PROJECT_NAME)/$(EXECUTABLE)" 2>/dev/null || true; echo "$(GREEN)Application stopped$(NC)"; exit 0' INT; \
+		cd $(PROJECT_NAME) && ./$(EXECUTABLE) & \
+		wait
+
+start-daemon: build ## Build and start the game in background (daemon mode)
+	@echo "$(BLUE)Starting $(PROJECT_NAME) in background...$(NC)"
+	@if [ ! -d "$(PROJECT_NAME)" ]; then \
+		echo "$(RED)Error: Build directory not found. Run 'make build' first$(NC)"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(PROJECT_NAME)/$(EXECUTABLE)" ]; then \
+		echo "$(RED)Error: Executable not found in $(PROJECT_NAME)/$(EXECUTABLE). Run 'make build' first$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)Checking for existing $(PROJECT_NAME) processes...$(NC)"
+	@pkill -f "$(PROJECT_NAME)/$(EXECUTABLE)" 2>/dev/null || true
+	@echo "$(GREEN)Starting $(PROJECT_NAME) in background...$(NC)"
+	@cd $(PROJECT_NAME) && \
+		nohup ./$(EXECUTABLE) > ../$(PROJECT_NAME).log 2>&1 & \
+		APP_PID=$$! && \
+		echo $$APP_PID > ../$(PROJECT_NAME).pid && \
+		echo "$(GREEN)Application started in background$(NC)" && \
+		echo "$(YELLOW)PID: $$APP_PID$(NC)" && \
+		echo "$(YELLOW)Log file: $(PROJECT_NAME).log$(NC)" && \
+		echo "$(YELLOW)Use 'make stop-app' to stop the application$(NC)"
 
 # =============================================================================
 # Testing Targets
@@ -300,6 +325,8 @@ clean: ## Clean build artifacts
 	@find $(BACKEND_DIR) -name '*.pyc' -delete 2>/dev/null || true
 	@echo "$(BLUE)Removing frontend build$(NC)"
 	@rm -rf $(FRONTEND_DIR)/dist
+	@echo "$(BLUE)Removing application runtime files$(NC)"
+	@rm -f $(PROJECT_NAME).pid $(PROJECT_NAME).log
 	@echo "$(GREEN)Clean completed$(NC)"
 
 fclean: clean ## Full clean (including global virtual environment)
@@ -337,7 +364,7 @@ status: ## Show project status
 	@echo "  Python: $(PYTHON)"
 	@echo "  pip: $(PIP)"
 	@echo "  npm: $(NPM)"
-	@echo "  Global Virtual Environment: $(if $(wildcard $(VENV_DIR)),$(GREEN)Exists$(NC),$(RED)Missing$(NC))"
+	@echo "  Global Virtual Environment: $(if $(willsdcard $(VENV_DIR)),$(GREEN)Exists$(NC),$(RED)Missing$(NC))"
 	@echo "  Global VENV Python: $(if $(wildcard $(VENV_PYTHON)),$(GREEN)Available$(NC),$(RED)Missing$(NC))"
 	@echo "  Global VENV pip: $(if $(wildcard $(VENV_PIP)),$(GREEN)Available$(NC),$(RED)Missing$(NC))"
 	@echo "  Global VENV PyInstaller: $(if $(wildcard $(VENV_PYINSTALLER)),$(GREEN)Available$(NC),$(RED)Missing$(NC))"
@@ -349,6 +376,103 @@ stop: ## Stop any running processes
 	@pkill -f "python.*server.py" 2>/dev/null || true
 	@pkill -f "npm.*dev" 2>/dev/null || true
 	@echo "$(GREEN)Processes stopped$(NC)"
+
+stop-app: ## Stop the application (if running in daemon mode)
+	@echo "$(BLUE)Stopping $(PROJECT_NAME) application...$(NC)"
+	@if [ -f "$(PROJECT_NAME).pid" ]; then \
+		PID=$$(cat $(PROJECT_NAME).pid 2>/dev/null || echo ""); \
+		if [ -n "$$PID" ] && kill -0 $$PID 2>/dev/null; then \
+			echo "$(YELLOW)Stopping process $$PID...$(NC)"; \
+			kill $$PID 2>/dev/null || true; \
+			sleep 2; \
+			if kill -0 $$PID 2>/dev/null; then \
+				echo "$(YELLOW)Force killing process $$PID...$(NC)"; \
+				kill -9 $$PID 2>/dev/null || true; \
+			fi; \
+			echo "$(GREEN)Application stopped$(NC)"; \
+		else \
+			echo "$(YELLOW)Application not running (PID file exists but process not found)$(NC)"; \
+		fi; \
+		rm -f $(PROJECT_NAME).pid; \
+	else \
+		echo "$(YELLOW)No PID file found, trying to kill by process name...$(NC)"; \
+		pkill -f "$(PROJECT_NAME)/$(EXECUTABLE)" 2>/dev/null || true; \
+		echo "$(GREEN)Application stopped$(NC)"; \
+	fi
+	@rm -f $(PROJECT_NAME).log 2>/dev/null || true
+
+status-app: ## Check if the application is running
+	@echo "$(BLUE)Checking $(PROJECT_NAME) application status...$(NC)"
+	@if [ -f "$(PROJECT_NAME).pid" ]; then \
+		PID=$$(cat $(PROJECT_NAME).pid 2>/dev/null || echo ""); \
+		if [ -n "$$PID" ] && kill -0 $$PID 2>/dev/null; then \
+			echo "$(GREEN)Application is running (PID: $$PID)$(NC)"; \
+			echo "$(YELLOW)Log file: $(PROJECT_NAME).log$(NC)"; \
+		else \
+			echo "$(RED)Application is not running (stale PID file)$(NC)"; \
+			rm -f $(PROJECT_NAME).pid; \
+		fi; \
+	else \
+		if pkill -f "$(PROJECT_NAME)/$(EXECUTABLE)" 2>/dev/null; then \
+			echo "$(YELLOW)Application may be running (no PID file but process found)$(NC)"; \
+		else \
+			echo "$(RED)Application is not running$(NC)"; \
+		fi; \
+	fi
+
+# =============================================================================
+# Port Management
+# =============================================================================
+check-port-6969: ## Check if port 6969 is in use and kill processes if needed
+	@echo "$(BLUE)Checking port 6969 usage...$(NC)"
+	@if command -v lsof >/dev/null 2>&1; then \
+		PIDS=$$(lsof -ti:6969 2>/dev/null || true); \
+		if [ -n "$$PIDS" ]; then \
+			echo "$(YELLOW)Port 6969 is in use by processes: $$PIDS$(NC)"; \
+			echo "$(BLUE)Killing processes using port 6969...$(NC)"; \
+			echo $$PIDS | xargs kill -9 2>/dev/null || true; \
+			echo "$(GREEN)Processes killed$(NC)"; \
+		else \
+			echo "$(GREEN)Port 6969 is available$(NC)"; \
+		fi; \
+	else \
+		echo "$(YELLOW)lsof not available, using netstat to check port 6969...$(NC)"; \
+		if command -v netstat >/dev/null 2>&1; then \
+			if netstat -an 2>/dev/null | grep -q ":6969 "; then \
+				echo "$(YELLOW)Port 6969 appears to be in use$(NC)"; \
+				echo "$(BLUE)Attempting to kill processes using port 6969...$(NC)"; \
+				pkill -f "python.*server.py" 2>/dev/null || true; \
+				pkill -f "6969" 2>/dev/null || true; \
+				echo "$(GREEN)Processes killed$(NC)"; \
+			else \
+				echo "$(GREEN)Port 6969 appears to be available$(NC)"; \
+			fi; \
+		else \
+			echo "$(YELLOW)Neither lsof nor netstat available, skipping port check$(NC)"; \
+		fi; \
+	fi
+
+check-port-6969-status: ## Check if port 6969 is in use (without killing processes)
+	@echo "$(BLUE)Checking port 6969 usage...$(NC)"
+	@if command -v lsof >/dev/null 2>&1; then \
+		PIDS=$$(lsof -ti:6969 2>/dev/null || true); \
+		if [ -n "$$PIDS" ]; then \
+			echo "$(YELLOW)Port 6969 is in use by processes: $$PIDS$(NC)"; \
+		else \
+			echo "$(GREEN)Port 6969 is available$(NC)"; \
+		fi; \
+	else \
+		echo "$(YELLOW)lsof not available, using netstat to check port 6969...$(NC)"; \
+		if command -v netstat >/dev/null 2>&1; then \
+			if netstat -an 2>/dev/null | grep -q ":6969 "; then \
+				echo "$(YELLOW)Port 6969 appears to be in use$(NC)"; \
+			else \
+				echo "$(GREEN)Port 6969 appears to be available$(NC)"; \
+			fi; \
+		else \
+			echo "$(YELLOW)Neither lsof nor netstat available, cannot check port$(NC)"; \
+		fi; \
+	fi
 
 # =============================================================================
 # Version Information

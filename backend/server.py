@@ -32,7 +32,7 @@ def serve_static_files(path):
     return send_from_directory(dist_dir, path)
 
 def main():
-    port = 6060
+    port = 6969
     print(f"Starting server on port {port}")
     app.run(host='127.0.0.1', port=port, debug=True)
 

@@ -1,0 +1,13 @@
+
+
+- setup readme with a QUICKSTART
+- setup requirements.txt 
+
+Explain the Python-based game engine with AI and its implimentation: 
+- Minimax algorithm with alpha-beta pruning
+- Heuristic evaluation function
+- Configurable difficulty levels
+- Performance optimization (memoization)
+- Move ordering for efficiency
+
+- update interface with modern and interactive animated UI/UX 

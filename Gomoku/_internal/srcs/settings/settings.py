@@ -4,7 +4,7 @@ class settings:
     def __init__(self) -> None:
         self._rule = SUPPORTED_RULES[0]
         self._player1 = "Alkemist"
-        self._player2 = "Hmida"
+        self._player2 = "Mamali"
         self._AIName = "AI"
         self._debug_mode = False
         self._difficulty_level = 1
