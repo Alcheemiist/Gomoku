@@ -28,6 +28,8 @@ def delete_game():
 @game_blueprint.route('/api/game/move', methods=['POST'])
 def move():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         data = request.get_json()
         played = game_manager_module.play_turn(data["x"], data["y"])
@@ -38,6 +40,8 @@ def move():
 @game_blueprint.route('/api/game/board', methods=['GET'])
 def get_board():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         return jsonify({"message": game_manager_module.board.tolist()})
     except Exception as e:
@@ -46,6 +50,8 @@ def get_board():
 @game_blueprint.route('/api/game/turns', methods=['GET'])
 def get_turn():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         return jsonify({"message": game_manager_module.turn})
     except Exception as e:
@@ -54,6 +60,8 @@ def get_turn():
 @game_blueprint.route('/api/game/currentPlayer', methods=['GET'])
 def get_current_player():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         return jsonify({"message": game_manager_module.current_player_index})
     except Exception as e:
@@ -62,6 +70,8 @@ def get_current_player():
 @game_blueprint.route('/api/game/captured', methods=['GET'])
 def get_peercaptured():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         player1_captured = game_manager_module.player1_captured
         player2_captured = game_manager_module.player2_captured
@@ -72,6 +82,8 @@ def get_peercaptured():
 @game_blueprint.route('/api/game/players_name', methods=['GET'])
 def get_names():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         return jsonify({"message": [game_manager_module.player1_name, game_manager_module.player2_name]})
     except Exception as e:
@@ -80,16 +92,21 @@ def get_names():
 @game_blueprint.route('/api/game/best_move', methods=['GET'])
 def get_best_moves():
     global game_manager_module
-
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
-        best_move = game_manager_module.best_move()
-        return jsonify({"x": best_move[0], "y": best_move[1]})
+        result = game_manager_module.best_move()
+        x, y = result[0], result[1]
+        thinking_time_seconds = result[2] if len(result) >= 3 else 0.0
+        return jsonify({"x": x, "y": y, "thinking_time_seconds": thinking_time_seconds})
     except Exception as e:
         return jsonify({"message": str(e)}), 400
 
 @game_blueprint.route('/api/game/winner', methods=['GET'])
 def get_winner_color():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         if game_manager_module.is_game_over:
             kwargs = {
@@ -107,6 +124,8 @@ def get_winner_color():
 @game_blueprint.route('/api/game/ai_player', methods=['GET'])
 def get_ai_index_player():
     global game_manager_module
+    if game_manager_module is None:
+        return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         return jsonify({"message": game_manager_module.AI_Player})
     except Exception as e:

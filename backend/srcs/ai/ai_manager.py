@@ -30,23 +30,27 @@ class AI_manager():
 
         if len(board._used_actions) == 0:
             center = self._board._size//2
-            return center, center
+            elapsed = time() - current_time
+            return center, center, elapsed
 
         if not self._ai_isThinking:
             self._ai_isThinking = True
             players_clone = [player.clone() for player in players]
-            _, x, y = minimax(board, board._board.copy(), self._depth,
+            score, x, y = minimax(board, board._board.copy(), self._depth,
                               players_clone, current_player_index,
                               used_actions=board._used_actions.copy(),
-                              memo = self._memo)
+                              memo=self._memo)
             if x is None or y is None:
                 x, y = get_best_available_actions(board._board, board._used_actions, self.ZERO)[0]
             self._ai_isThinking = False
         else:
             raise Exception("AI is already thinking")
 
+        elapsed = time() - current_time
+
         if self._debug_mode:
-            print("Can't print the time, debug mode is on")
+            print(f"[AI Debug] depth={self._depth} score={score} best_move=({x},{y}) time={elapsed:.3f}s")
         else:
-            print(f"Time to get best move:{time()-current_time:.2f}s")
-        return x, y
+            print(f"Time to get best move:{elapsed:.2f}s")
+
+        return x, y, elapsed

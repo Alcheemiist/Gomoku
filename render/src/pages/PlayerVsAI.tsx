@@ -255,8 +255,10 @@ export default function PlayerVsAI() {
         `${config.serverUrl}/api/game/best_move`,
         { headers: config.headers_data }
       );
-      console.log('Best move:', response.data.x, response.data.y);
-      return [response.data.x, response.data.y];
+      const x = response.data.x;
+      const y = response.data.y;
+      const thinkingTimeSeconds = response.data.thinking_time_seconds ?? null;
+      return { move: [x, y] as [number, number], thinkingTimeSeconds };
     } catch (error) {
       console.error('Error fetching best move:', error);
       return null;
@@ -267,11 +269,12 @@ export default function PlayerVsAI() {
     if (winner) return;
 
     setAiThinkingStart(Date.now());
-    const bestMove = await findBestMove();
-    if (!bestMove) {
+    const result = await findBestMove();
+    if (!result) {
       setAiThinkingStart(null);
       return;
     }
+    const { move: bestMove, thinkingTimeSeconds: backendThinkingTime } = result;
     const [x, y] = bestMove;
 
     try {
@@ -303,7 +306,9 @@ export default function PlayerVsAI() {
       }
     } finally {
       if (aiThinkingStart && !winner) {
-        const thinkingTime = (Date.now() - aiThinkingStart) / 1000;
+        const thinkingTime = backendThinkingTime != null && backendThinkingTime >= 0
+          ? backendThinkingTime
+          : (Date.now() - aiThinkingStart) / 1000;
         setAiThinkingTime(thinkingTime);
         setAiThinkingStart(null);
         

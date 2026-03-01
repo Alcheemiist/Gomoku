@@ -51,32 +51,36 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
     const dx = end[1] - start[1];
     const dy = end[0] - start[0];
     
-    // Normalize the direction to get unit vector
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const unitDx = dx / length;
-    const unitDy = dy / length;
-    
     // Calculate all 5 positions in the winning line
     const winningPositions: [number, number][] = [];
     
-    // Generate exactly 5 consecutive positions
+    // Generate exactly 5 consecutive positions from start to end
     for (let i = 0; i < 5; i++) {
-      const x = Math.round(start[1] + unitDx * i);
-      const y = Math.round(start[0] + unitDy * i);
+      const t = i / 4; // t goes from 0 to 1
+      const x = Math.round(start[1] + dx * t);
+      const y = Math.round(start[0] + dy * t);
       winningPositions.push([y, x]);
     }
+
+    // Calculate line properties
+    const lineLength = Math.sqrt(dx * dx + dy * dy) * cellSize;
+    const lineAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+    
+    // Calculate center position of the line
+    const centerX = (start[1] + end[1]) / 2 * cellSize + cellSize / 2;
+    const centerY = (start[0] + end[0]) / 2 * cellSize + cellSize / 2;
 
     return (
       <>
         {/* Winning line connecting all 5 stones */}
         <div
-          className="absolute bg-yellow-400 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-20 shadow-lg"
+          className="absolute bg-yellow-400 rounded-full z-20 shadow-lg"
           style={{
-            width: `${Math.sqrt((end[1] - start[1]) * cellSize * (end[1] - start[1]) * cellSize + (end[0] - start[0]) * cellSize * (end[0] - start[0]) * cellSize)}px`,
+            width: `${lineLength}px`,
             height: '6px',
-            left: `${start[1] * cellSize + cellSize/2}px`,
-            top: `${start[0] * cellSize + cellSize/2}px`,
-            transform: `translate(-50%, -50%) rotate(${Math.atan2((end[0] - start[0]) * cellSize, (end[1] - start[1]) * cellSize) * (180 / Math.PI)}deg)`,
+            left: `${centerX}px`,
+            top: `${centerY}px`,
+            transform: `translate(-50%, -50%) rotate(${lineAngle}deg)`,
             boxShadow: '0 0 10px rgba(255, 255, 0, 0.8)',
           }}
         />

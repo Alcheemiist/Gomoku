@@ -325,7 +325,7 @@ export default function PlayerVsPlayer() {
               onCellClick={handleCellClick} 
               hintPosition={getHintPosition()}
               winningLine={winningLine}
-              isLoading={isLoading}
+              isLoading={false}
               disabled={!!winner}
             />
           </div>

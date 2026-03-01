@@ -1,4 +1,4 @@
-# =============================================================================
+# =================================python============================================
 # Gomoku Project Makefile
 # =============================================================================
 # Cross-platform build system for Gomoku game
@@ -27,7 +27,7 @@ PYTHON := $(shell command -v python3 2> /dev/null || command -v python 2> /dev/n
 PIP := $(shell command -v pip3 2> /dev/null || command -v pip 2> /dev/null)
 NPM := $(shell command -v npm 2> /dev/null)
 
-# Platform Detection
+# Platform Detection j
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
     PLATFORM := linux
@@ -59,7 +59,8 @@ else
 endif
 
 # Executable Names
-EXECUTABLE := $(PROJECT_NAME)$(EXECUTABLE_EXT)
+NAME := Gomoku
+EXECUTABLE := $(NAME)$(EXECUTABLE_EXT)
 
 # Colors for output
 RED := \033[0;31m
@@ -74,11 +75,15 @@ NC := \033[0m # No Color
 .PHONY: all build install clean fclean re help check-deps check-venv activate dev test format lint
 .PHONY: install-backend install-frontend build-backend build-frontend
 .PHONY: env start start-daemon stop stop-app status-app debug version check-port-6969 check-port-6969-status quit
+.PHONY: kill-port kill-python kill-gomoku
 
 # =============================================================================
-# Default Target
+# Default Target (spec: $(NAME), all, clean, fclean, re)
 # =============================================================================
-all: help
+all: $(NAME)
+
+$(NAME): build
+	@echo "$(GREEN)Build complete: $(NAME)$(NC)"
 
 # =============================================================================
 # Help Target
@@ -133,7 +138,7 @@ env: check-deps ## Create Python virtual environment
 	fi
 	@if [ -f "$(VENV_PYTHON)" ]; then \
 		echo "$(BLUE)Activating virtual environment and upgrading pip...$(NC)"; \
-		$(VENV_ACTIVATE_CMD) python -m pip install --upgrade pip; \
+		$(VENV_ACTIVATE_CMD) python3 -m pip install --upgrade pip; \
 		echo "$(BLUE)Installing wheel and setuptools...$(NC)"; \
 		$(VENV_ACTIVATE_CMD) pip install wheel setuptools; \
 		echo "$(GREEN)Global environment setup complete$(NC)"; \
@@ -240,13 +245,13 @@ build-backend: check-venv ## Build backend executable
 # =============================================================================
 # Development Targets
 # =============================================================================
-dev: install check-venv check-port-6969 ## Run in development mode
+dev: install check-venv kill-port ## Run in development mode
 	@echo "$(BLUE)Starting development server with global virtual environment...$(NC)"
 	@echo "$(YELLOW)Backend will run on http://localhost:6969$(NC)"
 	@echo "$(YELLOW)Frontend will run on http://localhost:5173$(NC)"
 	@echo "$(YELLOW)Press Ctrl+C to stop$(NC)"
 	@trap 'kill %1; kill %2' INT; \
-		cd $(BACKEND_DIR) && $(VENV_ACTIVATE_CMD) python server.py & \
+		cd $(BACKEND_DIR) && $(VENV_ACTIVATE_CMD) python3 server.py & \
 		cd $(FRONTEND_DIR) && $(NPM) run dev & \
 		wait
 
@@ -340,6 +345,22 @@ fclean: clean ## Full clean (including global virtual environment)
 re: fclean build ## Rebuild everything from scratch
 
 # =============================================================================
+# Quick Kill Commands
+# =============================================================================
+kill-port: ## Kill all processes on port 6969 (short command)
+	@echo "$(BLUE)Killing processes on port 6969...$(NC)"
+	@lsof -ti:6969 | xargs kill -9 2>/dev/null || true
+	@sleep 1
+	@lsof -ti:6969 | xargs kill -9 2>/dev/null || true
+	@echo "$(GREEN)Port 6969 cleanup completed$(NC)"
+
+kill-python: ## Kill all Python processes (short command)
+	@pkill -f python 2>/dev/null || true
+
+kill-gomoku: ## Kill Gomoku processes (short command)
+	@pkill -f Gomoku 2>/dev/null || true
+
+# =============================================================================
 # Utility Targets
 # =============================================================================
 debug: ## Show debug information about variables
@@ -364,7 +385,7 @@ status: ## Show project status
 	@echo "  Python: $(PYTHON)"
 	@echo "  pip: $(PIP)"
 	@echo "  npm: $(NPM)"
-	@echo "  Global Virtual Environment: $(if $(willsdcard $(VENV_DIR)),$(GREEN)Exists$(NC),$(RED)Missing$(NC))"
+	@echo "  Global Virtual Environment: $(if $(wildcard $(VENV_DIR)),$(GREEN)Exists$(NC),$(RED)Missing$(NC))"
 	@echo "  Global VENV Python: $(if $(wildcard $(VENV_PYTHON)),$(GREEN)Available$(NC),$(RED)Missing$(NC))"
 	@echo "  Global VENV pip: $(if $(wildcard $(VENV_PIP)),$(GREEN)Available$(NC),$(RED)Missing$(NC))"
 	@echo "  Global VENV PyInstaller: $(if $(wildcard $(VENV_PYINSTALLER)),$(GREEN)Available$(NC),$(RED)Missing$(NC))"
