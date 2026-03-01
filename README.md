@@ -35,8 +35,9 @@ make dev
 ### Available Commands
 ```bash
 make help          # Show all available commands
-make check-deps    # Verify all dependencies
+make               # Build the project (same as make all or make Gomoku)
 make build         # Build the entire project
+make check-deps    # Verify all dependencies
 make dev           # Run in development mode
 make start         # Build and start the game
 make clean         # Clean build artifacts

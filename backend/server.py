@@ -31,11 +31,15 @@ dist_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'render_dist
 # Route to serve the `index.html`
 @app.route('/')
 def serve_index():
+    if not os.path.isdir(dist_dir) or not os.path.isfile(os.path.join(dist_dir, 'index.html')):
+        return jsonify({"error": "Frontend not built. Run 'make build-frontend' or 'make build'."}), 503
     return send_from_directory(dist_dir, 'index.html')
 
 # Route to serve other static files (CSS, JS, etc.)
 @app.route('/<path:path>')
 def serve_static_files(path):
+    if not os.path.isdir(dist_dir):
+        return jsonify({"error": "Frontend not built."}), 503
     return send_from_directory(dist_dir, path)
 
 # Shutdown endpoint

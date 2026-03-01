@@ -192,7 +192,7 @@ export default function PlayerVsAI() {
       );
       if (response.data.message !== null) {
         setWinner(response.data.message.winner_name);
-        setWinningLine(response.data.message.winning_line);
+        setWinningLine(response.data.message.winning_line ?? null);
         setShowWinnerModal(true);
         return true;
       }

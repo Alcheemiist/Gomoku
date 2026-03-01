@@ -161,7 +161,7 @@ export default function PlayerVsPlayer() {
       const response = await axios.get(`${config.serverUrl}/api/game/winner`, {headers : config.headers_data});
       if (response.data.message !== null) {
         setWinner(response.data.message.winner_name);
-        setWinningLine(response.data.message.winning_line);
+        setWinningLine(response.data.message.winning_line ?? null);
         return true;
       }
     } catch (error) {

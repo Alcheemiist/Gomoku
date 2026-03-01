@@ -11,6 +11,8 @@ def initilize_game():
     global game_manager_module
     try:
         data = request.get_json()
+        if not data or 'isAI' not in data:
+            return jsonify({"message": "Missing JSON body or 'isAI' field."}), 400
         game_manager_module = game_manager(settings_module, data["isAI"])
         return jsonify({"message": "success"})
     except Exception as e:
@@ -109,12 +111,13 @@ def get_winner_color():
         return jsonify({"message": "No game initialized. Call /api/game/init first."}), 400
     try:
         if game_manager_module.is_game_over:
-            kwargs = {
-                "winning_line": {"start":[game_manager_module.line_pos_win["y0"], game_manager_module.line_pos_win["x0"]],
-                                 "end":[game_manager_module.line_pos_win["y1"], game_manager_module.line_pos_win["x1"]]
-                                 },
-                "winner_name": game_manager_module.winner_name
-            }
+            kwargs = {"winner_name": game_manager_module.winner_name}
+            lp = game_manager_module.line_pos_win
+            if lp and lp.get("x0") is not None and lp.get("y0") is not None and lp.get("x1") is not None and lp.get("y1") is not None:
+                kwargs["winning_line"] = {
+                    "start": [lp["y0"], lp["x0"]],
+                    "end": [lp["y1"], lp["x1"]]
+                }
             return jsonify({"message": kwargs})
         else:
             return jsonify({"message": None})
