@@ -316,8 +316,11 @@ export default function PlayerVsPlayer() {
         </div>
 
         <div className="flex flex-col items-center" style={{ minHeight: '600px' }}>
-          <div className="mb-4 px-6 py-2 bg-white/10 backdrop-blur rounded-full h-12 flex items-center justify-center w-32">
+          <div className="mb-4 px-6 py-2 bg-white/10 backdrop-blur rounded-full min-h-12 flex flex-col items-center justify-center gap-0.5">
             <span className="text-xl font-bold text-white">Turn {turns}</span>
+            <span className="text-xs font-medium text-white/80">
+              {currentPlayer === 1 ? "Player 1's turn" : "Player 2's turn"}
+            </span>
           </div>
           <div className="flex-shrink-0">
             <Board 

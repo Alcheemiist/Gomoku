@@ -204,6 +204,12 @@ export default function PlayerVsAI() {
 
   const initializeGame = async () => {
     try {
+      // Sync current difficulty to backend so the new game uses it
+      await axios.post(
+        `${config.serverUrl}/api/settings/difficulty/${difficulty}`,
+        { difficulty },
+        { headers: config.headers_data }
+      );
       const response = await axios.post(
         `${config.serverUrl}/api/game/init`,
         { isAI: true },
@@ -462,9 +468,12 @@ export default function PlayerVsAI() {
         />
 
         <div className="flex flex-col items-center" style={{ minHeight: '600px' }}>
-          <div className="mb-4 px-6 py-2 bg-white/10 backdrop-blur rounded-full h-12 flex items-center justify-center w-32">
+          <div className="mb-4 px-6 py-2 bg-white/10 backdrop-blur rounded-full min-h-12 flex flex-col items-center justify-center gap-0.5">
             <span className="text-xl font-bold text-white">
               Turn {turns}
+            </span>
+            <span className="text-xs font-medium text-white/80">
+              {currentPlayer === AIPlayerIndex ? "AI's turn" : 'Your turn'}
             </span>
           </div>
           

@@ -1,6 +1,13 @@
 from srcs.game.rules.standard import standard
 from srcs.game.player import player
 
+# Stub rule variants (bonus): same as standard until fully implemented
+class PRO(standard):
+    pass
+
+class SWAP(standard):
+    pass
+
 SUPPORTED_RULES = ["standard", "PRO", "SWAP"]
 
 class rules:

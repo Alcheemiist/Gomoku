@@ -54,7 +54,11 @@ class game_manager:
         return False
 
     def best_move(self):
-        return self.player.best_move(self._board, self._players, self._current_player_index)
+        result = self.player.best_move(self._board, self._players, self._current_player_index)
+        # best_move returns (x, y, thinking_time_seconds)
+        if len(result) >= 3:
+            return result[0], result[1], result[2]
+        return result[0], result[1], 0.0
 
     def set_player_best_move(self, best_move_on, idx):
         if idx != 0 and idx != 1:

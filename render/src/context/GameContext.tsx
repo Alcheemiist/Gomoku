@@ -11,7 +11,7 @@ interface GameContextType {
   setPlayer1Name: (name: string) => void;
   setPlayer2Name: (name: string) => void;
   setAiName: (name: string) => void;
-  setDifficulty: (difficulty: 'easy' | 'medium' | 'hard') => void;
+  setDifficulty: (difficulty: 'easy' | 'medium' | 'hard') => void | Promise<void>;
   getPlayer1Name: () => Promise<void>;
   getPlayer2Name: () => Promise<void>;
   getAiName: () => Promise<void>;
@@ -92,18 +92,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     toast.success('AI name updated');
   };
 
-  const setDifficulty = (difficulty: 'easy' | 'medium' | 'hard') => {
-    var error = null;
-    axios.post(`${config.serverUrl}/api/settings/difficulty/${difficulty}`, { difficulty }, {headers : config.headers_data})
-        .then(_ => error = null)
-        .catch(error => error = error.response.data.message);
-
-    if (error) {
-      toast.error(error);
-      return;
+  const setDifficulty = async (difficulty: 'easy' | 'medium' | 'hard') => {
+    try {
+      await axios.post(
+        `${config.serverUrl}/api/settings/difficulty/${difficulty}`,
+        { difficulty },
+        { headers: config.headers_data }
+      );
+      setDifficultyState(difficulty);
+      toast.success('Difficulty updated');
+    } catch (err) {
+      const message =
+        axios.isAxiosError(err) && err.response?.data?.message
+          ? err.response.data.message
+          : 'Failed to update difficulty';
+      toast.error(message);
     }
-    setDifficultyState(difficulty);
-    toast.success('Difficulty updated');
   };
 
   const getPlayer1Name = async () => {

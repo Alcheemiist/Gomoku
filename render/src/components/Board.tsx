@@ -46,56 +46,81 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
     if (!winningLine) return null;
 
     const { start, end } = winningLine;
-    
-    // Calculate the direction vector
     const dx = end[1] - start[1];
     const dy = end[0] - start[0];
-    
-    // Calculate all 5 positions in the winning line
+
     const winningPositions: [number, number][] = [];
-    
-    // Generate exactly 5 consecutive positions from start to end
     for (let i = 0; i < 5; i++) {
-      const t = i / 4; // t goes from 0 to 1
+      const t = i / 4;
       const x = Math.round(start[1] + dx * t);
       const y = Math.round(start[0] + dy * t);
       winningPositions.push([y, x]);
     }
 
-    // Calculate line properties
     const lineLength = Math.sqrt(dx * dx + dy * dy) * cellSize;
     const lineAngle = Math.atan2(dy, dx) * (180 / Math.PI);
-    
-    // Calculate center position of the line
     const centerX = (start[1] + end[1]) / 2 * cellSize + cellSize / 2;
     const centerY = (start[0] + end[0]) / 2 * cellSize + cellSize / 2;
 
+    const strokeLength = lineLength;
+    const half = strokeLength / 2;
+    const svgSize = Math.max(lineLength + 80, 120);
+
     return (
       <>
-        {/* Winning line connecting all 5 stones */}
-        <div
-          className="absolute bg-yellow-400 rounded-full z-20 shadow-lg"
+        <svg
+          className="absolute z-20 overflow-visible"
+          width={svgSize}
+          height={svgSize}
           style={{
-            width: `${lineLength}px`,
-            height: '6px',
-            left: `${centerX}px`,
-            top: `${centerY}px`,
-            transform: `translate(-50%, -50%) rotate(${lineAngle}deg)`,
-            boxShadow: '0 0 10px rgba(255, 255, 0, 0.8)',
+            left: centerX - svgSize / 2,
+            top: centerY - svgSize / 2,
           }}
-        />
-        
-        {/* Highlight all 5 winning stones with proper alignment */}
+        >
+          <defs>
+            <linearGradient id="winLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(250,204,21,0.9)" />
+              <stop offset="50%" stopColor="rgba(253,224,71,1)" />
+              <stop offset="100%" stopColor="rgba(250,204,21,0.9)" />
+            </linearGradient>
+            <filter id="winLineGlow">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <line
+            x1={svgSize / 2 - half}
+            y1={svgSize / 2}
+            x2={svgSize / 2 + half}
+            y2={svgSize / 2}
+            stroke="url(#winLineGradient)"
+            strokeWidth="6"
+            strokeLinecap="round"
+            fill="none"
+            filter="url(#winLineGlow)"
+            style={{
+              strokeDasharray: strokeLength,
+              strokeDashoffset: strokeLength,
+              transformOrigin: `${svgSize / 2}px ${svgSize / 2}px`,
+              transform: `rotate(${lineAngle}deg)`,
+              animation: 'drawLine 0.6s ease-out 0.15s forwards',
+            }}
+          />
+        </svg>
+
         {winningPositions.map(([row, col], index) => (
           <div
             key={index}
-            className="absolute rounded-full border-4 border-yellow-400 z-30 animate-pulse"
+            className="absolute rounded-full z-30 winning-stone-glow"
             style={{
               width: `${cellSize * 0.8}px`,
               height: `${cellSize * 0.8}px`,
               left: `${col * cellSize + cellSize * 0.1}px`,
               top: `${row * cellSize + cellSize * 0.1}px`,
-              boxShadow: '0 0 15px rgba(255, 255, 0, 1), inset 0 0 10px rgba(255, 255, 0, 0.5)',
+              animationDelay: `${0.2 + index * 0.08}s`,
             }}
           />
         ))}
@@ -125,12 +150,18 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-amber-50 to-amber-100 p-8 rounded-2xl shadow-2xl border border-amber-200" style={{ 
-      width: BOARD_SIZE + 64, 
-      height: BOARD_SIZE + 64,
-      minWidth: BOARD_SIZE + 64,
-      minHeight: BOARD_SIZE + 64
-    }}>
+    <div 
+      className="relative rounded-2xl shadow-2xl overflow-hidden"
+      style={{ 
+        width: BOARD_SIZE + 64, 
+        height: BOARD_SIZE + 64,
+        minWidth: BOARD_SIZE + 64,
+        minHeight: BOARD_SIZE + 64,
+        background: 'linear-gradient(145deg, #c4a574 0%, #8b6914 30%, #6b4423 70%, #4a3520 100%)',
+        border: '8px solid #5d4e37',
+        boxShadow: 'inset 0 0 60px rgba(0,0,0,0.15), 0 20px 50px rgba(0,0,0,0.4), 0 0 0 2px rgba(139,105,20,0.3)',
+      }}
+    >
       {/* Enhanced loading overlay */}
       {isLoading && (
         <div className="loading-overlay">
@@ -151,32 +182,32 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
         </div>
       )}
       <div 
-        className="relative"
+        className="relative m-6 board-3d"
         style={{ 
           width: BOARD_SIZE,
           height: BOARD_SIZE,
         }}
       >
-        {/* Enhanced Grid lines with subtle animations */}
+        {/* Grid lines */}
         {Array.from({ length: DISPLAY_SIZE }, (_, i) => (
           <React.Fragment key={i}>
-            {/* Vertical lines */}
             <div
-              className="absolute bg-gradient-to-b from-[#855E42] to-[#6B4423] w-[1px] shadow-sm"
+              className="absolute w-[1px] shadow-sm"
               style={{
                 left: `${cellSize * i}px`,
                 top: '0px',
                 height: `${BOARD_SIZE}px`,
+                background: 'linear-gradient(to bottom, rgba(90,60,35,0.85), rgba(60,40,22,0.9))',
                 animation: `fadeIn 0.5s ease-out ${i * 0.02}s both`
               }}
             />
-            {/* Horizontal lines */}
             <div
-              className="absolute bg-gradient-to-r from-[#855E42] to-[#6B4423] h-[1px] shadow-sm"
+              className="absolute h-[1px] shadow-sm"
               style={{
                 top: `${cellSize * i}px`,
                 left: '0px',
                 width: `${BOARD_SIZE}px`,
+                background: 'linear-gradient(to right, rgba(90,60,35,0.85), rgba(60,40,22,0.9))',
                 animation: `fadeIn 0.5s ease-out ${i * 0.02}s both`
               }}
             />
@@ -238,15 +269,15 @@ export default function Board({ board, onCellClick, hintPosition, winningLine, i
                 >
                   {cell !== 0 && (
                     <div 
-                      className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full
-                        ${cell === 1 ? 'stone-black' : 'stone-white'}
-                        ${isWinning ? 'animate-win-pulse border-4 border-yellow-400 shadow-lg' : 'animate-stone-place'}
+                      className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full stone-glossy
+                        ${cell === 1 ? 'stone-black-glossy' : 'stone-white-glossy'}
+                        ${isWinning ? 'winning-stone-pulse' : 'stone-drop'}
                         ${isRipple ? 'animate-ripple' : ''}`}
                       style={{ 
                         width: `${Math.max(cellSize * 0.8, 16)}px`, 
                         height: `${Math.max(cellSize * 0.8, 16)}px`,
                         ...(isWinning && {
-                          boxShadow: '0 0 20px rgba(255, 255, 0, 0.8), inset 0 0 10px rgba(255, 255, 0, 0.3)',
+                          boxShadow: '0 0 20px rgba(250, 204, 21, 0.8), inset -2px -2px 4px rgba(0,0,0,0.2), inset 2px 2px 4px rgba(255,255,255,0.3)',
                           zIndex: 25
                         })
                       }}

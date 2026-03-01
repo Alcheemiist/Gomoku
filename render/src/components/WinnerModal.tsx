@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Trophy, RotateCcw, Home, X, Star, Crown, Zap, Sparkles } from 'lucide-react';
 
 interface WinnerModalProps {
@@ -8,17 +8,32 @@ interface WinnerModalProps {
   onClose: () => void;
 }
 
+const CONFETTI_COUNT = 48;
+
 export default function WinnerModal({ winner, onNewGame, onMainMenu, onClose }: WinnerModalProps) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [isAIWinner, setIsAIWinner] = useState(false);
 
+  const confettiPieces = useMemo(() => {
+    return Array.from({ length: CONFETTI_COUNT }, (_, i) => {
+      const angle = (i / CONFETTI_COUNT) * 360 + (i * 7) % 40;
+      const dist = 120 + (i * 13) % 200;
+      const rad = (angle * Math.PI) / 180;
+      const x = Math.cos(rad) * dist + ((i * 5) % 40) - 20;
+      const y = Math.sin(rad) * dist + ((i * 11) % 40) - 20;
+      const colors = ['#facc15', '#a855f7', '#ec4899', '#3b82f6', '#22c55e', '#f97316'];
+      const size = 6 + (i % 5);
+      const delay = (i % 12) * 0.012;
+      const duration = 0.9 + (i % 7) * 0.08;
+      const rot = ((i * 37) % 360) - 180;
+      return { x, y, color: colors[i % colors.length], size, delay, duration, rot };
+    });
+  }, []);
+
   useEffect(() => {
-    // Trigger confetti animation
     setShowConfetti(true);
     setIsAIWinner(winner.toLowerCase().includes('ai') || winner.toLowerCase().includes('bot'));
-    
-    // Auto-hide confetti after animation
-    const timer = setTimeout(() => setShowConfetti(false), 3000);
+    const timer = setTimeout(() => setShowConfetti(false), 3500);
     return () => clearTimeout(timer);
   }, [winner]);
 
@@ -42,22 +57,23 @@ export default function WinnerModal({ winner, onNewGame, onMainMenu, onClose }: 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 animate-fade-in p-4">
-      {/* Confetti Effect */}
+      {/* Confetti burst from center */}
       {showConfetti && (
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(20)].map((_, i) => (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+          {confettiPieces.map((piece, i) => (
             <div
               key={i}
-              className={`absolute w-2 h-2 rounded-full animate-ping ${
-                i % 4 === 0 ? 'bg-yellow-400' : 
-                i % 4 === 1 ? 'bg-purple-400' : 
-                i % 4 === 2 ? 'bg-pink-400' : 'bg-blue-400'
-              }`}
+              className="absolute rounded-sm confetti-piece"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 2}s`
+                width: piece.size,
+                height: piece.size * (i % 2 === 0 ? 1 : 0.45),
+                left: '50%',
+                top: '50%',
+                background: piece.color,
+                ['--tx' as string]: `${piece.x}px`,
+                ['--ty' as string]: `${piece.y}px`,
+                ['--rot' as string]: `${piece.rot}deg`,
+                animation: `confettiBurst ${piece.duration}s ease-out ${piece.delay}s forwards`,
               }}
             />
           ))}
