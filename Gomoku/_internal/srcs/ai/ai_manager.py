@@ -41,7 +41,12 @@ class AI_manager():
                               used_actions=board._used_actions.copy(),
                               memo=self._memo)
             if x is None or y is None:
-                x, y = get_best_available_actions(board._board, board._used_actions, self.ZERO)[0]
+                actions = get_best_available_actions(board._board, board._used_actions, self.ZERO)
+                if actions:
+                    x, y = actions[0]
+                else:
+                    center = self._board._size // 2
+                    x, y = center, center
             self._ai_isThinking = False
         else:
             raise Exception("AI is already thinking")

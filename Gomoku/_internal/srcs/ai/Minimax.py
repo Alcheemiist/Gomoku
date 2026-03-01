@@ -65,6 +65,9 @@ def minimax(board, board_array, depth, players, ai_player_index,
         return score, None, None
 
     available_actions = get_best_available_actions(board_array, used_actions, players[0].ZERO)
+    if not available_actions:
+        return score, None, None
+
     max_eval = float('-inf')
     min_eval = float('inf')
     best_move = (available_actions[0][0], available_actions[0][1])
