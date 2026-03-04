@@ -264,7 +264,14 @@ export default function PlayerVsAI() {
       const x = response.data.x;
       const y = response.data.y;
       const thinkingTimeSeconds = response.data.thinking_time_seconds ?? null;
-      return { move: [x, y] as [number, number], thinkingTimeSeconds };
+      const depthUsed = response.data.depth_used ?? 0;
+      const nodesEvaluated = response.data.nodes_evaluated ?? 0;
+      return {
+        move: [x, y] as [number, number],
+        thinkingTimeSeconds,
+        depthUsed,
+        nodesEvaluated
+      };
     } catch (error) {
       console.error('Error fetching best move:', error);
       return null;
@@ -280,7 +287,7 @@ export default function PlayerVsAI() {
       setAiThinkingStart(null);
       return;
     }
-    const { move: bestMove, thinkingTimeSeconds: backendThinkingTime } = result;
+    const { move: bestMove, thinkingTimeSeconds: backendThinkingTime, depthUsed, nodesEvaluated } = result;
     const [x, y] = bestMove;
 
     try {
@@ -318,34 +325,30 @@ export default function PlayerVsAI() {
         setAiThinkingTime(thinkingTime);
         setAiThinkingStart(null);
         
-        // Update AI statistics
+        // Update AI statistics (use real depth/nodes from backend)
         const newThinkingTimes = [...thinkingTimes, thinkingTime];
         setThinkingTimes(newThinkingTimes);
-        
-        const nodesEvaluated = Math.floor(Math.random() * 10000) + 1000;
-        const depth = Math.floor(Math.random() * 8) + 3;
-        
+
         setAiStats(prev => ({
           ...prev,
           totalMoves: prev.totalMoves + 1,
           averageThinkingTime: newThinkingTimes.reduce((a, b) => a + b, 0) / newThinkingTimes.length,
           fastestMove: Math.min(prev.fastestMove, thinkingTime),
           slowestMove: Math.max(prev.slowestMove, thinkingTime),
-          nodesEvaluated: prev.nodesEvaluated + nodesEvaluated,
-          depthReached: Math.max(prev.depthReached, depth)
+          nodesEvaluated: prev.nodesEvaluated + (nodesEvaluated ?? 0),
+          depthReached: Math.max(prev.depthReached, depthUsed ?? 0)
         }));
 
-                // Generate comprehensive move analysis
                 const analysis = {
                   position: [x, y] as [number, number],
-                  score: Math.floor(Math.random() * 200) - 100, // -100 to 100
+                  score: 0,
                   reasoning: generateMoveReasoning(x, y, thinkingTime),
-                  depth: depth,
-                  nodesEvaluated: nodesEvaluated,
+                  depth: depthUsed ?? 0,
+                  nodesEvaluated: nodesEvaluated ?? 0,
                   thinkingTime: thinkingTime,
                   alternativeMoves: generateAlternativeMoves(x, y),
                   gamePhase: getGamePhase(turns),
-                  strategicValue: Math.floor(Math.random() * 100)
+                  strategicValue: 0
                 };
                 
                 setLastMoveAnalysis(analysis);

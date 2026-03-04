@@ -100,7 +100,14 @@ def get_best_moves():
         result = game_manager_module.best_move()
         x, y = result[0], result[1]
         thinking_time_seconds = result[2] if len(result) >= 3 else 0.0
-        return jsonify({"x": x, "y": y, "thinking_time_seconds": thinking_time_seconds})
+        depth_used = result[3] if len(result) >= 5 else 0
+        nodes_evaluated = result[4] if len(result) >= 5 else 0
+        return jsonify({
+            "x": x, "y": y,
+            "thinking_time_seconds": thinking_time_seconds,
+            "depth_used": depth_used,
+            "nodes_evaluated": nodes_evaluated
+        })
     except Exception as e:
         return jsonify({"message": str(e)}), 400
 

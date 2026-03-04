@@ -46,6 +46,7 @@ export default function AIStatistics({
   };
 
   const formatTime = (seconds: number) => {
+    if (seconds === Infinity || seconds < 0 || Number.isNaN(seconds)) return '—';
     if (seconds < 1) return `${(seconds * 1000).toFixed(0)}ms`;
     return `${seconds.toFixed(1)}s`;
   };
@@ -89,8 +90,8 @@ export default function AIStatistics({
         <div className="grid grid-cols-2 gap-2 text-xs text-white/60">
           <div>Win Rate: {(stats.winRate * 100).toFixed(1)}%</div>
           <div>Games: {stats.totalGames}</div>
-          <div>Nodes: {stats.nodesEvaluated.toLocaleString()}</div>
-          <div>Depth: {stats.depthReached}</div>
+          <div>Nodes: {stats.totalMoves > 0 ? stats.nodesEvaluated.toLocaleString() : '—'}</div>
+          <div>Depth: {stats.totalMoves > 0 ? stats.depthReached : '—'}</div>
         </div>
       </div>
 

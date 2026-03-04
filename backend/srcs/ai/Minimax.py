@@ -50,7 +50,10 @@ def simulate_move(board, board_array, x, y, players, ai_player_index, maximizing
 
 def minimax(board, board_array, depth, players, ai_player_index,
             maximizing_player=True, alpha=float('-inf'),
-            beta=float('inf'), used_actions={}, memo={}):
+            beta=float('inf'), used_actions={}, memo={}, nodes_counter=None):
+    if nodes_counter is not None:
+        nodes_counter[0] += 1
+
     score = heuristic_evaluation(board_array, used_actions, players, ai_player_index, board._connect_num)
 
     state_key = (tuple(map(tuple, board_array)), depth, maximizing_player, alpha, beta)
@@ -80,7 +83,7 @@ def minimax(board, board_array, depth, players, ai_player_index,
             eval, _, _ = minimax(
                 board, board_array, depth - 1, players,
                 ai_player_index, not maximizing_player,
-                alpha, beta, used_actions, memo)
+                alpha, beta, used_actions, memo, nodes_counter)
 
             undo_move(board_array, x, y, players, captured_stones_pos, used_actions, prev_captures)
 
