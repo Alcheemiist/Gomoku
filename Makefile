@@ -299,9 +299,9 @@ start-daemon: build ## Build and start the game in background (daemon mode)
 # =============================================================================
 # Testing Targets
 # =============================================================================
-test: ## Run tests (placeholder for future implementation)
-	@echo "$(BLUE)Running tests...$(NC)"
-	@echo "$(YELLOW)Tests not yet implemented$(NC)"
+test: check-venv ## Check AI speed (< 0.5 s per move) and blocking
+	@echo "$(BLUE)Running AI checks...$(NC)"
+	@cd $(BACKEND_DIR) && $(VENV_ACTIVATE_CMD) python3 tests/check_ai.py
 
 # =============================================================================
 # Code Quality Targets

@@ -1,4 +1,9 @@
-from srcs.ai.heuristic_evaluation import math, heuristic_evaluation, check_index, MAX_SCORE
+from time import perf_counter
+from srcs.ai.heuristic_evaluation import math, heuristic_evaluation, evaluate_pos, check_index, MAX_SCORE
+
+
+class SearchTimeout(Exception):
+    pass
 
 def get_best_available_actions(board_array, used_actions, ZERO):
     available_actions = []
@@ -17,6 +22,22 @@ def get_best_available_actions(board_array, used_actions, ZERO):
     available_actions.sort(key=lambda pos: abs(pos[0] - center) + abs(pos[1] - center))
 
     return available_actions
+
+def rank_actions(board_array, actions, players, mover_index, connect_num, limit):
+    # Score each candidate by what it does for the side to move (attack) and what it
+    # takes away from the opponent (block), then keep the most forcing ones.
+    mover, opponent = players[mover_index], players[(mover_index + 1) % 2]
+    zero = players[0].ZERO
+    scored = []
+    for x, y in actions:
+        board_array[y][x] = mover.stone_color
+        attack = evaluate_pos(board_array, mover, x, y, connect_num)
+        board_array[y][x] = opponent.stone_color
+        block = evaluate_pos(board_array, opponent, x, y, connect_num)
+        board_array[y][x] = zero
+        scored.append((max(attack, block) * 2 + min(attack, block), x, y))
+    scored.sort(key=lambda s: -s[0])
+    return [(x, y) for _, x, y in scored[:limit]]
 
 def undo_move(board_array, x, y, players, captured_stones_pos, used_actions, prev_captures):
     for x0, y0 in captured_stones_pos[0]:
@@ -50,16 +71,20 @@ def simulate_move(board, board_array, x, y, players, ai_player_index, maximizing
 
 def minimax(board, board_array, depth, players, ai_player_index,
             maximizing_player=True, alpha=float('-inf'),
-            beta=float('inf'), used_actions={}, memo={}, nodes_counter=None):
+            beta=float('inf'), used_actions={}, memo={}, nodes_counter=None,
+            deadline=None, branching=None):
+    if deadline is not None and perf_counter() > deadline:
+        raise SearchTimeout()
     if nodes_counter is not None:
         nodes_counter[0] += 1
 
-    score = heuristic_evaluation(board_array, used_actions, players, ai_player_index, board._connect_num)
-
-    state_key = (tuple(map(tuple, board_array)), depth, maximizing_player, alpha, beta)
-
-    if state_key in memo:
-        return memo[state_key]
+    # memo caches the static evaluation of a position (board + captures); search results
+    # aren't cached because alpha-beta values are bounds, not exact scores.
+    state_key = (board_array.tobytes(), players[0].peer_captured, players[1].peer_captured)
+    score = memo.get(state_key)
+    if score is None:
+        score = heuristic_evaluation(board_array, used_actions, players, ai_player_index, board._connect_num)
+        memo[state_key] = score
 
     if abs(score) >= MAX_SCORE or depth == 0:
         score = score + (int(math.copysign(1, score))*depth)
@@ -70,6 +95,10 @@ def minimax(board, board_array, depth, players, ai_player_index,
     available_actions = get_best_available_actions(board_array, used_actions, players[0].ZERO)
     if not available_actions:
         return score, None, None
+    if branching:
+        mover_index = ai_player_index if maximizing_player else (ai_player_index + 1) % 2
+        available_actions = rank_actions(board_array, available_actions, players, mover_index,
+                                         board._connect_num, branching)
 
     max_eval = float('-inf')
     min_eval = float('inf')
@@ -83,7 +112,8 @@ def minimax(board, board_array, depth, players, ai_player_index,
             eval, _, _ = minimax(
                 board, board_array, depth - 1, players,
                 ai_player_index, not maximizing_player,
-                alpha, beta, used_actions, memo, nodes_counter)
+                alpha, beta, used_actions, memo, nodes_counter,
+                deadline, branching)
 
             undo_move(board_array, x, y, players, captured_stones_pos, used_actions, prev_captures)
 
@@ -102,10 +132,5 @@ def minimax(board, board_array, depth, players, ai_player_index,
                 break
 
     if maximizing_player:
-        result = (max_eval, best_move[0], best_move[1])
-    else:
-        result = (min_eval, best_move[0], best_move[1])
-
-    # Store the result in the memo dictionary
-    memo[state_key] = result
-    return result
+        return (max_eval, best_move[0], best_move[1])
+    return (min_eval, best_move[0], best_move[1])
